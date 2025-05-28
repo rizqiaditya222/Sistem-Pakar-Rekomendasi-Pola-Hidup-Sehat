@@ -1,4 +1,4 @@
-# Sistem-Pakar-Rekomendasi-Pola-Hidup-Sehat
+# Sistem Pakar Rekomendasi Pola Hidup Sehat
 
 Anggota Kelompok: 
 1. Muhammad Rizqi Aditya Firmansyah (235150700111025) 
