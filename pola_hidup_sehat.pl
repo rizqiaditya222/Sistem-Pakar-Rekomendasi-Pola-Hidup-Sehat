@@ -1,263 +1,481 @@
+% ========================================================================
+% SISTEM PAKAR REKOMENDASI POLA HIDUP SEHAT - VERSI DIPERBAIKI
+% ========================================================================
 
-% Predikat Dinamis
-:- dynamic usia/1.
-:- dynamic berat_badan/1.
-:- dynamic aktivitas/1.
-:- dynamic pola_makan/1.
-:- dynamic tingkat_stres/1.
-:- dynamic kondisi_kesehatan/1.
-:- dynamic preferensi_makanan/1.
-:- dynamic preferensi_olahraga/1.
-:- dynamic waktu_tidur/1.
+% Predikat Dinamis untuk Menyimpan Data Pengguna
+:- dynamic profil_pengguna/8.
+:- dynamic kondisi_khusus/1.
 
-% Fakta: Jenis makanan
-makanan(sayur_rebus).
-makanan(dada_ayam).
-makanan(oatmeal).
-makanan(salmon).
-makanan(buah_buahan).
-makanan(nasi_merah).
-makanan(tahu_tempe).
-makanan(jus_sayur).
-makanan(air_putih).
-makanan(roti_gandum).
-makanan(alpukat).
-makanan(telur).
-makanan(yogurt_rendah_lemak).
+% ========================================================================
+% BASIS PENGETAHUAN: MAKANAN DAN NUTRISI
+% ========================================================================
 
-% Fakta: Jenis olahraga
-olahraga(jogging).
-olahraga(yoga).
-olahraga(angkat_beban).
-olahraga(bersepeda).
-olahraga(renang).
-olahraga(plank).
-olahraga(jalan_kaki).
-olahraga(meditasi).
-olahraga(pilates).
-olahraga(latihan_interval_intensitas_tinggi). % HIIT
+% makanan(Nama, KategoriNutrisi, Kalori, Manfaat, KondisiKhusus)
+makanan(nasi_merah, karbohidrat_kompleks, sedang, [energi_berkelanjutan, serat_tinggi], [diabetes, diet]).
+makanan(quinoa, protein_karbohidrat, sedang, [protein_lengkap, bebas_gluten], [vegetarian, diabetes]).
+makanan(oatmeal, karbohidrat_serat, sedang, [kolesterol_rendah, kenyang_lama], [jantung, diabetes]).
+makanan(roti_gandum, karbohidrat_kompleks, sedang, [serat, vitamin_b], [umum]).
 
-% Fakta: Pola makan 
-pola_makan_jenis(teratur_seimbang).
-pola_makan_jenis(tidak_teratur).
-pola_makan_jenis(berlebihan).
-pola_makan_jenis(kurang_nutrisi).
-pola_makan_jenis(tinggi_gula_dan_lemak).
+makanan(dada_ayam, protein_hewani, sedang, [protein_tinggi, rendah_lemak], [massa_otot]).
+makanan(salmon, protein_omega3, tinggi, [omega3, vitamin_d], [jantung, otak]).
+makanan(telur, protein_lengkap, sedang, [protein_berkualitas, vitamin_d], [umum]).
+makanan(tuna, protein_rendah_lemak, sedang, [protein_tinggi, selenium], [diet, massa_otot]).
 
-% Fakta: Aktivitas
-aktivitas_jenis(pasif).
-aktivitas_jenis(sedang).
-aktivitas_jenis(aktif).
+makanan(tahu_tempe, protein_nabati, rendah, [protein_nabati, probiotik], [vegetarian]).
+makanan(kacang_almond, lemak_protein, tinggi, [lemak_sehat, vitamin_e], [jantung]).
+makanan(kacang_merah, protein_serat, sedang, [protein_nabati, zat_besi], [vegetarian, anemia]).
 
-% Fakta: Tingkat Stres 
-tingkat_stres_jenis(rendah).
-tingkat_stres_jenis(sedang).
-tingkat_stres_jenis(tinggi).
+makanan(bayam, sayuran_hijau, rendah, [zat_besi, folat, vitamin_k], [anemia, tulang]).
+makanan(brokoli, sayuran_cruciferous, rendah, [vitamin_c, antioksidan], [umum]).
+makanan(wortel, sayuran_beta_karoten, rendah, [vitamin_a, serat], [mata]).
+makanan(sayur_rebus, sayuran_umum, rendah, [serat, vitamin, mineral], [diet, diabetes]).
 
-% Fakta: Kondisi Kesehatan 
-kondisi_kesehatan_jenis(tidak_ada).
-kondisi_kesehatan_jenis(diabetes).
-kondisi_kesehatan_jenis(penyakit_jantung).
-kondisi_kesehatan_jenis(tekanan_darah_tinggi).
-kondisi_kesehatan_jenis(kolesterol_tinggi).
-kondisi_kesehatan_jenis(gangguan_pencernaan).
+makanan(pisang, buah_kalium, sedang, [kalium, vitamin_b6], [hipertensi, olahraga]).
+makanan(alpukat, buah_lemak_sehat, tinggi, [lemak_tak_jenuh, kalium], [jantung]).
+makanan(buah_beri, buah_antioksidan, rendah, [antioksidan, vitamin_c], [umum]).
+makanan(jeruk, buah_vitamin_c, rendah, [vitamin_c, serat], [imunitas]).
 
-% Perhitungan BMI dan klasifikasi berat
-klasifikasi_berat(Berat, Tinggi, underweight) :-
-    BMI is Berat / (Tinggi * Tinggi),
-    BMI < 18.5.
+makanan(susu_rendah_lemak, susu_kalsium, sedang, [kalsium, protein, vitamin_d], [tulang]).
+makanan(yogurt_greek, probiotik, rendah, [probiotik, protein_tinggi], [pencernaan]).
+makanan(keju_cottage, protein_susu, sedang, [protein_casein, kalsium], [massa_otot]).
 
-klasifikasi_berat(Berat, Tinggi, ideal) :-
-    BMI is Berat / (Tinggi * Tinggi),
-    BMI >= 18.5,
-    BMI =< 24.9.
+makanan(minyak_zaitun, lemak_sehat, tinggi, [lemak_tak_jenuh, vitamin_e], [jantung]).
+makanan(air_putih, hidrasi, nol, [hidrasi_optimal], [umum]).
 
-klasifikasi_berat(Berat, Tinggi, overweight) :-
-    BMI is Berat / (Tinggi * Tinggi),
-    BMI > 24.9,
-    BMI =< 29.9. % Tambahan kategori overweight sampai 29.9
+% ========================================================================
+% BASIS PENGETAHUAN: OLAHRAGA DAN AKTIVITAS FISIK
+% ========================================================================
 
-klasifikasi_berat(Berat, Tinggi, obesitas) :-
-    BMI is Berat / (Tinggi * Tinggi),
-    BMI > 29.9. % Kategori baru: obesitas
+% olahraga(Nama, Kategori, Intensitas, Durasi_Menit, Manfaat, Kondisi_Cocok)
+olahraga(jalan_kaki, kardio_ringan, rendah, 30, [jantung, sendi_aman], [pemula, lansia, rehabilitasi]).
+olahraga(jogging, kardio_sedang, sedang, 20, [stamina, membakar_kalori], [remaja, dewasa]).
+olahraga(lari, kardio_tinggi, tinggi, 15, [stamina_tinggi, kalori_maksimal], [atlet, sangat_aktif]).
 
-% Aturan rekomendasi makanan 
-rekomendasi_makanan(salmon, 'Sumber protein dan omega-3 yang bagus untuk underweight atau aktivitas aktif.') :-
-    berat_badan(underweight),
-    aktivitas(aktif).
+olahraga(bersepeda, kardio_sendi_aman, sedang, 30, [kaki, kardio, sendi_aman], [semua_usia]).
+olahraga(renang, kardio_total, tinggi, 30, [seluruh_tubuh, sendi_aman], [arthritis, cedera]).
+olahraga(aqua_aerobik, kardio_air, sedang, 45, [sendi_aman, resistensi], [lansia, arthritis]).
 
-rekomendasi_makanan(dada_ayam, 'Protein tanpa lemak untuk membangun otot, baik bagi underweight dan aktivitas sedang.') :-
-    berat_badan(underweight),
-    aktivitas(sedang).
+olahraga(angkat_beban, kekuatan, tinggi, 45, [massa_otot, metabolisme], [dewasa, underweight]).
+olahraga(push_up, kekuatan_tubuh, sedang, 15, [otot_atas, praktis], [umum]).
+olahraga(plank, kekuatan_inti, sedang, 10, [otot_inti, postur], [nyeri_punggung]).
 
-rekomendasi_makanan(oatmeal, 'Karbohidrat kompleks yang memberikan energi stabil, ideal untuk pola makan teratur.') :-
-    berat_badan(ideal),
-    pola_makan(teratur_seimbang).
+olahraga(yoga, fleksibilitas_mental, rendah, 60, [fleksibilitas, stres, keseimbangan], [stres, kaku]).
+olahraga(pilates, kekuatan_fleksibilitas, sedang, 45, [otot_inti, postur, fleksibilitas], [postur_buruk]).
+olahraga(tai_chi, keseimbangan_mental, rendah, 30, [keseimbangan, koordinasi, stres], [lansia, keseimbangan]).
 
-rekomendasi_makanan(nasi_merah, 'Karbohidrat kompleks dengan serat tinggi, baik untuk kontrol berat badan overweight.') :-
-    berat_badan(overweight),
-    aktivitas(aktif).
+olahraga(stretching, fleksibilitas, rendah, 15, [fleksibilitas, relaksasi], [kaku, pemulihan]).
+olahraga(meditasi, mental, rendah, 20, [stres, fokus, tidur], [stres, insomnia]).
 
-rekomendasi_makanan(sayur_rebus, 'Rendah kalori, tinggi serat dan vitamin, sangat baik untuk mengurangi gula dan lemak.') :-
-    berat_badan(overweight),
-    pola_makan(tinggi_gula_dan_lemak).
+% ========================================================================
+% KLASIFIKASI DAN PERHITUNGAN
+% ========================================================================
 
-rekomendasi_makanan(jus_sayur, 'Cara mudah mendapatkan nutrisi dari sayuran, membantu detoksifikasi dari gula dan lemak.') :-
-    pola_makan(tinggi_gula_dan_lemak).
+% Klasifikasi BMI berdasarkan WHO
+hitung_bmi(Berat, Tinggi, BMI, Kategori) :-
+    BMI is Berat / (Tinggi * Tinggi),
+    (   BMI < 18.5 -> Kategori = underweight
+    ;   BMI =< 24.9 -> Kategori = normal
+    ;   BMI =< 29.9 -> Kategori = overweight
+    ;   Kategori = obesitas
+    ).
 
-rekomendasi_makanan(air_putih, 'Penting untuk hidrasi dan metabolisme, membantu mengurangi keinginan akan minuman manis.') :-
-    pola_makan(tinggi_gula_dan_lemak).
+% Kategori Usia yang Lebih Spesifik
+kategori_usia(Usia, balita) :- Usia >= 2, Usia =< 5.
+kategori_usia(Usia, anak) :- Usia >= 6, Usia =< 12.
+kategori_usia(Usia, remaja) :- Usia >= 13, Usia =< 19.
+kategori_usia(Usia, dewasa_muda) :- Usia >= 20, Usia =< 35.
+kategori_usia(Usia, dewasa) :- Usia >= 36, Usia =< 55.
+kategori_usia(Usia, pralansia) :- Usia >= 56, Usia =< 65.
+kategori_usia(Usia, lansia) :- Usia > 65.
 
-rekomendasi_makanan(buah_buahan, 'Sumber vitamin dan serat alami, baik untuk melengkapi nutrisi jika pola makan tidak teratur.') :-
-    pola_makan(tidak_teratur).
+% Kebutuhan Kalori Harian (estimasi sederhana)
+kebutuhan_kalori(Berat, Tinggi, Usia, Aktivitas, JenisKelamin, Kalori) :-
+    % BMR menggunakan Mifflin-St Jeor Equation (simplified)
+    (   JenisKelamin = pria ->
+        BMR is (10 * Berat) + (6.25 * Tinggi * 100) - (5 * Usia) + 5
+    ;   BMR is (10 * Berat) + (6.25 * Tinggi * 100) - (5 * Usia) - 161
+    ),
+    % Faktor aktivitas
+    (   Aktivitas = sangat_rendah -> Faktor = 1.2
+    ;   Aktivitas = rendah -> Faktor = 1.375
+    ;   Aktivitas = sedang -> Faktor = 1.55
+    ;   Aktivitas = tinggi -> Faktor = 1.725
+    ;   Faktor = 1.9
+    ),
+    Kalori is BMR * Faktor.
 
-rekomendasi_makanan(tahu_tempe, 'Sumber protein nabati yang baik, cocok untuk vegetarian atau variasi protein.') :-
-    preferensi_makanan(vegetarian).
+% ========================================================================
+% ATURAN REKOMENDASI CERDAS
+% ========================================================================
 
-rekomendasi_makanan(alpukat, 'Lemak sehat yang baik untuk jantung, direkomendasikan untuk kolesterol tinggi atau kurang nutrisi.') :-
-    (kondisi_kesehatan(kolesterol_tinggi) ; pola_makan(kurang_nutrisi)).
+% Rekomendasi Berdasarkan Prioritas Kesehatan
+rekomendasi_makanan_prioritas(Makanan, Alasan) :-
+    kondisi_khusus(Kondisi),
+    makanan(Makanan, _, _, Manfaat, KondisiKhusus),
+    (member(Kondisi, KondisiKhusus) ; member(umum, KondisiKhusus)),
+    kondisi_manfaat(Kondisi, Manfaat, Alasan).
 
-rekomendasi_makanan(telur, 'Protein lengkap dan nutrisi penting, baik untuk underweight atau pemulihan energi.') :-
-    berat_badan(underweight) ; aktivitas(aktif).
+% Mapping kondisi kesehatan dengan manfaat yang dibutuhkan
+kondisi_manfaat(diabetes, Manfaat, 'Membantu mengontrol gula darah dan memberikan energi stabil') :-
+    (member(energi_berkelanjutan, Manfaat) ; member(serat_tinggi, Manfaat)).
+kondisi_manfaat(jantung, Manfaat, 'Mendukung kesehatan jantung dan mengurangi risiko penyakit kardiovaskular') :-
+    (member(omega3, Manfaat) ; member(lemak_sehat, Manfaat) ; member(kolesterol_rendah, Manfaat)).
+kondisi_manfaat(hipertensi, Manfaat, 'Membantu mengontrol tekanan darah') :-
+    member(kalium, Manfaat).
+kondisi_manfaat(anemia, Manfaat, 'Meningkatkan kadar zat besi dan mencegah anemia') :-
+    (member(zat_besi, Manfaat) ; member(folat, Manfaat)).
+kondisi_manfaat(osteoporosis, Manfaat, 'Memperkuat tulang dan mencegah keropos tulang') :-
+    (member(kalsium, Manfaat) ; member(vitamin_d, Manfaat)).
+kondisi_manfaat(vegetarian, Manfaat, 'Sumber protein nabati yang lengkap untuk vegetarian') :-
+    member(protein_nabati, Manfaat).
 
-rekomendasi_makanan(yogurt_rendah_lemak, 'Probiotik untuk pencernaan, direkomendasikan jika ada gangguan pencernaan atau diet.') :-
-    kondisi_kesehatan(gangguan_pencernaan).
+% Rekomendasi berdasarkan tujuan berat badan
+rekomendasi_berat_badan(underweight, Makanan, 'Membantu penambahan berat badan sehat dengan kalori dan nutrisi padat') :-
+    makanan(Makanan, _, tinggi, _, _).
+rekomendasi_berat_badan(normal, Makanan, 'Mempertahankan berat badan ideal dengan nutrisi seimbang') :-
+    makanan(Makanan, _, sedang, _, _).
+rekomendasi_berat_badan(overweight, Makanan, 'Mendukung penurunan berat badan dengan kalori rendah namun nutrisi tinggi') :-
+    makanan(Makanan, _, rendah, _, _).
+rekomendasi_berat_badan(obesitas, Makanan, 'Membantu program penurunan berat badan dengan makanan rendah kalori dan tinggi serat') :-
+    makanan(Makanan, _, rendah, Manfaat, _),
+    (member(serat_tinggi, Manfaat) ; member(protein_tinggi, Manfaat)).
 
-rekomendasi_makanan(oatmeal, 'Sarapan sehat yang menenangkan, baik saat stres.') :-
-    tingkat_stres(tinggi).
+% Rekomendasi olahraga berdasarkan kondisi dan tujuan
+rekomendasi_olahraga_kondisi(Kondisi, Olahraga, Alasan) :-
+    olahraga(Olahraga, _, _, _, Manfaat, KondisiCocok),
+    member(Kondisi, KondisiCocok),
+    format(atom(Alasan), 'Cocok untuk kondisi ~w dengan manfaat: ~w', [Kondisi, Manfaat]).
 
-rekomendasi_makanan(sayur_rebus, 'Mudah dicerna dan kaya nutrisi, ideal untuk kondisi pencernaan sensitif.') :-
-    kondisi_kesehatan(gangguan_pencernaan).
+% Rekomendasi olahraga berdasarkan usia
+rekomendasi_olahraga_usia(KategoriUsia, Olahraga, Alasan) :-
+    kategori_usia_olahraga(KategoriUsia, Olahraga, Alasan).
 
-rekomendasi_makanan(nasi_merah, 'Pilihan karbohidrat dengan indeks glikemik lebih rendah untuk penderita diabetes.') :-
-    kondisi_kesehatan(diabetes).
+kategori_usia_olahraga(balita, bermain_aktif, 'Aktivitas bermain untuk perkembangan motorik dan koordinasi').
+kategori_usia_olahraga(anak, bersepeda, 'Melatih keseimbangan dan koordinasi, serta menyenangkan').
+kategori_usia_olahraga(anak, renang, 'Olahraga menyeluruh yang aman untuk pertumbuhan').
+kategori_usia_olahraga(remaja, jogging, 'Membangun stamina dan kesehatan kardiovaskular').
+kategori_usia_olahraga(remaja, angkat_beban, 'Membangun massa otot (dengan pengawasan yang tepat)').
+kategori_usia_olahraga(dewasa_muda, renang, 'Olahraga komprehensif untuk kebugaran optimal').
+kategori_usia_olahraga(dewasa_muda, angkat_beban, 'Mempertahankan dan membangun massa otot').
+kategori_usia_olahraga(dewasa, yoga, 'Mengurangi stres dan meningkatkan fleksibilitas').
+kategori_usia_olahraga(dewasa, pilates, 'Memperkuat otot inti dan memperbaiki postur').
+kategori_usia_olahraga(pralansia, tai_chi, 'Meningkatkan keseimbangan dan koordinasi').
+kategori_usia_olahraga(pralansia, jalan_kaki, 'Aktivitas kardio yang aman dan dapat dilakukan setiap hari').
+kategori_usia_olahraga(lansia, tai_chi, 'Mencegah jatuh dan meningkatkan keseimbangan').
+kategori_usia_olahraga(lansia, stretching, 'Mempertahankan fleksibilitas dan mengurangi kekakuan').
 
-% Aturan rekomendasi olahraga 
-rekomendasi_olahraga(jogging, 'Baik untuk membakar kalori dan meningkatkan kardio, cocok untuk overweight dan pasif.') :-
-    berat_badan(overweight),
-    aktivitas(pasif),
-    \+ kondisi_kesehatan(penyakit_jantung). % Hindari jika ada penyakit jantung
 
-rekomendasi_olahraga(yoga, 'Meningkatkan fleksibilitas dan mengurangi stres, sangat baik untuk usia lanjut dan stres tinggi.') :-
-    usia(U), U >= 50 ; tingkat_stres(tinggi).
 
-rekomendasi_olahraga(angkat_beban, 'Membangun massa otot dan kekuatan, ideal untuk underweight dan aktivitas aktif.') :-
-    berat_badan(underweight),
-    aktivitas(aktif).
+mulai_sistem :-
+    write('========================================================='), nl,
+    write('    SISTEM PAKAR REKOMENDASI POLA HIDUP SEHAT'), nl,
+    write('========================================================='), nl,
+    write('Sistem ini akan memberikan rekomendasi makanan dan olahraga'), nl,
+    write('berdasarkan profil kesehatan dan tujuan Anda.'), nl, nl,
 
-rekomendasi_olahraga(renang, 'Olahraga kardio seluruh tubuh yang rendah dampak, cocok untuk overweight dan sendi sensitif.') :-
-    berat_badan(overweight),
-    aktivitas(sedang).
+    retractall(profil_pengguna(_, _, _, _, _, _, _, _)),
+    retractall(kondisi_khusus(_)),
 
-rekomendasi_olahraga(jalan_kaki, 'Mudah dilakukan, efektif untuk pemula dan mengurangi dampak pola makan buruk.') :-
-    aktivitas(pasif),
-    pola_makan(tinggi_gula_dan_lemak).
+    kumpulkan_data_pengguna(Usia, Berat, Tinggi, JenisKelamin, Aktivitas, PolaMakan, Stres, Tidur),
+    kumpulkan_kondisi_khusus,
 
-rekomendasi_olahraga(bersepeda, 'Kardio yang menyenangkan dan efektif, baik untuk mempertahankan berat badan ideal.') :-
-    berat_badan(ideal),
-    aktivitas(aktif).
+    assertz(profil_pengguna(Usia, Berat, Tinggi, JenisKelamin, Aktivitas, PolaMakan, Stres, Tidur)),
 
-rekomendasi_olahraga(plank, 'Membangun kekuatan inti, cocok untuk menjaga kebugaran saat berat badan ideal.') :-
-    berat_badan(ideal),
-    pola_makan(teratur_seimbang).
+    tampilkan_analisis_lengkap.
 
-rekomendasi_olahraga(meditasi, 'Sangat efektif untuk mengurangi stres dan meningkatkan kualitas tidur.') :-
-    tingkat_stres(tinggi) ; waktu_tidur(kurang).
+kumpulkan_data_pengguna(Usia, Berat, Tinggi, JenisKelamin, Aktivitas, PolaMakan, Stres, Tidur) :-
+    % Usia
+    repeat,
+    write('Masukkan usia Anda (tahun): '),
+    read(Usia),
+    (number(Usia), Usia > 0, Usia < 120 -> true ;
+     (write('Usia tidak valid! Masukkan angka 1-119.'), nl, fail)),
+    !,
 
-rekomendasi_olahraga(pilates, 'Meningkatkan kekuatan, fleksibilitas, dan keseimbangan, baik untuk semua usia dan kondisi.') :-
-    preferensi_olahraga(pilates) ; tingkat_stres(sedang).
+    % Jenis Kelamin
+    repeat,
+    write('Jenis kelamin (pria/wanita): '),
+    read(JenisKelamin),
+    member(JenisKelamin, [pria, wanita]),
+    !,
 
-rekomendasi_olahraga(latihan_interval_intensitas_tinggi, 'Membakar kalori secara efisien dalam waktu singkat, cocok untuk aktivitas aktif dan target penurunan berat badan cepat.') :-
-    aktivitas(aktif),
-    (berat_badan(overweight) ; berat_badan(obesitas)),
-    \+ kondisi_kesehatan(penyakit_jantung),
-    \+ usia(U), U >= 50.
+    % Berat dan Tinggi
+    repeat,
+    write('Berat badan (kg): '),
+    read(Berat),
+    (number(Berat), Berat > 0 -> true ;
+     (write('Berat badan tidak valid!'), nl, fail)),
+    !,
 
-% Interaksi pengguna
-mulai :-
-    write('Selamat datang di Sistem Pakar Kondisi Badan yang Lebih Akurat!'), nl,
-    retractall(usia(_)),
-    retractall(berat_badan(_)),
-    retractall(aktivitas(_)),
-    retractall(pola_makan(_)),
-    retractall(tingkat_stres(_)),
-    retractall(kondisi_kesehatan(_)),
-    retractall(preferensi_makanan(_)),
-    retractall(preferensi_olahraga(_)),
-    retractall(waktu_tidur(_)),
+    repeat,
+    write('Tinggi badan (meter, contoh: 1.70): '),
+    read(Tinggi),
+    (number(Tinggi), Tinggi > 0.5, Tinggi < 3.0 -> true ;
+     (write('Tinggi badan tidak valid!'), nl, fail)),
+    !,
 
-    tanya_usia,
-    tanya_berat_dan_tinggi,
-    tanya_aktivitas,
-    tanya_pola_makan,
-    tanya_tingkat_stres,
-    tanya_kondisi_kesehatan,
-    tanya_preferensi_makanan,
-    tanya_preferensi_olahraga,
-    tanya_waktu_tidur,
-    tampilkan_rekomendasi.
+    % Tingkat Aktivitas
+    write('Tingkat aktivitas fisik:'), nl,
+    write('1. Sangat rendah (tidak pernah olahraga)'), nl,
+    write('2. Rendah (olahraga 1-2x/minggu)'), nl,
+    write('3. Sedang (olahraga 3-4x/minggu)'), nl,
+    write('4. Tinggi (olahraga 5-6x/minggu)'), nl,
+    write('5. Sangat tinggi (olahraga setiap hari)'), nl,
+    repeat,
+    write('Pilihan (1-5): '),
+    read(PilAktivitas),
+    member(PilAktivitas, [1,2,3,4,5]),
+    konversi_aktivitas(PilAktivitas, Aktivitas),
+    !,
 
-tanya_usia :-
-    write('Masukkan usia Anda (dalam tahun): '),
-    read(U),
-    assertz(usia(U)).
+    % Pola Makan
+    write('Pola makan saat ini:'), nl,
+    write('1. Teratur dan seimbang'), nl,
+    write('2. Tidak teratur'), nl,
+    write('3. Sering makan berlebihan'), nl,
+    write('4. Kurang nutrisi'), nl,
+    write('5. Tinggi gula dan lemak'), nl,
+    repeat,
+    write('Pilihan (1-5): '),
+    read(PilMakan),
+    member(PilMakan, [1,2,3,4,5]),
+    konversi_pola_makan(PilMakan, PolaMakan),
+    !,
 
-tanya_berat_dan_tinggi :-
-    write('Masukkan berat badan Anda (kg): '),
-    read(Berat),
-    write('Masukkan tinggi badan Anda (dalam meter, contoh 1.65): '),
-    read(Tinggi),
-    klasifikasi_berat(Berat, Tinggi, Kategori),
-    assertz(berat_badan(Kategori)),
-    format('BMI Anda diklasifikasikan sebagai: ~w~n', [Kategori]).
+    % Tingkat Stres
+    repeat,
+    write('Tingkat stres (rendah/sedang/tinggi): '),
+    read(Stres),
+    member(Stres, [rendah, sedang, tinggi]),
+    !,
 
-tanya_aktivitas :-
-    write('Masukkan tingkat aktivitas Anda (pasif/sedang/aktif): '),
-    read(A),
-    (aktivitas_jenis(A) -> assertz(aktivitas(A)) ; (write('Input tidak valid, gunakan pasif/sedang/aktif.'), nl, tanya_aktivitas)).
+    % Kualitas Tidur
+    repeat,
+    write('Rata-rata jam tidur per malam: '),
+    read(JamTidur),
+    (number(JamTidur) ->
+        (JamTidur < 6 -> Tidur = kurang_sekali ;
+         JamTidur < 7 -> Tidur = kurang ;
+         JamTidur =< 9 -> Tidur = cukup ;
+         Tidur = terlalu_banyak)
+    ; Tidur = tidak_tahu),
+    !.
 
-tanya_pola_makan :-
-    write('Masukkan pola makan Anda (teratur_seimbang/tidak_teratur/berlebihan/kurang_nutrisi/tinggi_gula_dan_lemak): '),
-    read(Pola),
-    (pola_makan_jenis(Pola) -> assertz(pola_makan(Pola)) ; (write('Input tidak valid.'), nl, tanya_pola_makan)).
+konversi_aktivitas(1, sangat_rendah).
+konversi_aktivitas(2, rendah).
+konversi_aktivitas(3, sedang).
+konversi_aktivitas(4, tinggi).
+konversi_aktivitas(5, sangat_tinggi).
 
-tanya_tingkat_stres :-
-    write('Bagaimana tingkat stres Anda (rendah/sedang/tinggi)? '),
-    read(Stres),
-    (tingkat_stres_jenis(Stres) -> assertz(tingkat_stres(Stres)) ; (write('Input tidak valid, gunakan rendah/sedang/tinggi.'), nl, tanya_tingkat_stres)).
+konversi_pola_makan(1, teratur_seimbang).
+konversi_pola_makan(2, tidak_teratur).
+konversi_pola_makan(3, berlebihan).
+konversi_pola_makan(4, kurang_nutrisi).
+konversi_pola_makan(5, tinggi_gula_lemak).
 
-tanya_kondisi_kesehatan :-
-    write('Apakah Anda memiliki kondisi kesehatan tertentu (tidak_ada/diabetes/penyakit_jantung/tekanan_darah_tinggi/kolesterol_tinggi/gangguan_pencernaan)? '),
-    read(Kondisi),
-    (kondisi_kesehatan_jenis(Kondisi) -> assertz(kondisi_kesehatan(Kondisi)) ; (write('Input tidak valid.'), nl, tanya_kondisi_kesehatan)).
+kumpulkan_kondisi_khusus :-
+    write('Apakah Anda memiliki kondisi kesehatan khusus?'), nl,
+    write('Ketik kondisi yang sesuai (pisahkan dengan spasi jika lebih dari satu):'), nl,
+    write('- diabetes'), nl,
+    write('- jantung (penyakit jantung)'), nl,
+    write('- hipertensi'), nl,
+    write('- anemia'), nl,
+    write('- osteoporosis'), nl,
+    write('- arthritis'), nl,
+    write('- vegetarian'), nl,
+    write('- tidak_ada'), nl,
+    write('Kondisi: '),
+    read_line_to_string(user_input, Input),
+    split_string(Input, ' ,.', ' ,.', KondisiList), % Memperbaiki pemisah
+    forall(member(KondisiStr, KondisiList),
+           (atom_string(KondisiAtom, KondisiStr),
+            (KondisiAtom \= tidak_ada, KondisiAtom \= '' -> assertz(kondisi_khusus(KondisiAtom)) ; true))).
 
-tanya_preferensi_makanan :-
-    write('Apakah ada preferensi makanan khusus (vegetarian/non_vegetarian/tidak_ada)? '),
-    read(Preferensi),
-    (member(Preferensi, [vegetarian, non_vegetarian, tidak_ada]) -> assertz(preferensi_makanan(Preferensi)) ; (write('Input tidak valid.'), nl, tanya_preferensi_makanan)).
+% ========================================================================
+% ANALISIS DAN REKOMENDASI KOMPREHENSIF
+% ========================================================================
 
-tanya_preferensi_olahraga :-
-    write('Apakah ada preferensi olahraga khusus (yoga/pilates/angkat_beban/tidak_ada)? '),
-    read(Preferensi),
-    (member(Preferensi, [yoga, pilates, angkat_beban, tidak_ada]) -> assertz(preferensi_olahraga(Preferensi)) ; (write('Input tidak valid.'), nl, tanya_preferensi_olahraga)).
+tampilkan_analisis_lengkap :-
+    profil_pengguna(Usia, Berat, Tinggi, JenisKelamin, Aktivitas, PolaMakan, Stres, Tidur),
 
-tanya_waktu_tidur :-
-    write('Bagaimana kualitas tidur Anda (cukup_baik/kurang)? '),
-    read(Tidur),
-    (member(Tidur, [cukup_baik, kurang]) -> assertz(waktu_tidur(Tidur)) ; (write('Input tidak valid, gunakan cukup_baik/kurang.'), nl, tanya_waktu_tidur)).
+    % Analisis BMI
+    hitung_bmi(Berat, Tinggi, BMI, StatusBerat),
+    kategori_usia(Usia, KategoriUsia),
+    kebutuhan_kalori(Berat, Tinggi, Usia, Aktivitas, JenisKelamin, Kalori),
 
-tampilkan_rekomendasi :-
-    nl,
-    write('Rekomendasi untuk Anda:'), nl,
-    write('--- Makanan ---'), nl,
-    findall(M-Penjelasan, rekomendasi_makanan(M, Penjelasan), MakananList),
-    (MakananList = [] -> write('  Tidak ada rekomendasi makanan yang sesuai.'), nl ;
-      forall(member(M-Penjelasan, MakananList), format('  - ~w: ~w~n', [M, Penjelasan]))),
+    % Tampilkan profil
+    nl,
+    write('=================== ANALISIS PROFIL ANDA ==================='), nl,
+    format('Usia: ~w tahun (~w)~n', [Usia, KategoriUsia]),
+    format('BMI: ~2f (~w)~n', [BMI, StatusBerat]),
+    format('Kebutuhan Kalori Harian: ~0f kalori~n', [Kalori]),
+    format('Tingkat Aktivitas: ~w~n', [Aktivitas]),
+    format('Pola Makan: ~w~n', [PolaMakan]),
+    format('Tingkat Stres: ~w~n', [Stres]),
+    format('Kualitas Tidur: ~w~n', [Tidur]),
 
-    nl,
-    write('--- Olahraga ---'), nl,
-    findall(O-Penjelasan, rekomendasi_olahraga(O, Penjelasan), OlahragaList),
-    (OlahragaList = [] -> write('  Tidak ada rekomendasi olahraga yang sesuai.'), nl ;
-      forall(member(O-Penjelasan, OlahragaList), format('  - ~w: ~w~n', [O, Penjelasan]))),
-    nl,
-    write('Ingat, ini adalah saran umum. Konsultasikan dengan profesional kesehatan untuk rekomendasi yang dipersonalisasi.'), nl.
+    write('Kondisi Khusus: '),
+    (kondisi_khusus(K) ->
+        forall(kondisi_khusus(Kond), format('~w ', [Kond])) ;
+        write('tidak ada')),
+    nl, nl,
+
+    % Rekomendasi berdasarkan prioritas
+    write('================= REKOMENDASI MAKANAN ================='), nl,
+    tampilkan_rekomendasi_makanan(StatusBerat),
+
+    nl,
+    write('================= REKOMENDASI OLAHRAGA ================'), nl,
+    tampilkan_rekomendasi_olahraga(KategoriUsia, StatusBerat),
+
+    nl,
+    write('================== TIPS KESEHATAN ===================='), nl,
+    tampilkan_tips_personal(StatusBerat, PolaMakan, Stres, Tidur),
+
+    nl,
+    write('===================== PERINGATAN ====================='), nl,
+    write('* Konsultasikan dengan dokter sebelum memulai program baru.'), nl,
+    write('* Lakukan perubahan secara bertahap.'), nl,
+    write('* Monitor respons tubuh Anda.'), nl,
+    write('======================================================'), nl.
+
+tampilkan_rekomendasi_makanan(StatusBerat) :-
+    write('Makanan yang direkomendasikan:'), nl,
+
+    % Prioritas 1: Kondisi kesehatan khusus
+    (kondisi_khusus(_) ->
+        (write('→ Berdasarkan kondisi kesehatan:'), nl,
+         % Menggunakan setof untuk menghindari duplikasi
+         setof(Makanan-Alasan, rekomendasi_makanan_prioritas(Makanan, Alasan), RekomendasiPrioritas),
+         forall(member(M-A, RekomendasiPrioritas), format('  • ~w - ~w~n', [M, A]))), nl
+    ; true),
+
+    % Prioritas 2: Status berat badan
+    write('→ Berdasarkan target berat badan:'), nl,
+    setof(Makanan-Alasan, rekomendasi_berat_badan(StatusBerat, Makanan, Alasan), RekomendasiBerat),
+    forall(member(M-A, RekomendasiBerat), format('  • ~w - ~w~n', [M, A])),
+
+    % Rekomendasi umum
+    nl,
+    write('→ Makanan wajib untuk semua:'), nl,
+    write('  • Air putih - Minimal 8 gelas per hari untuk hidrasi optimal.'), nl,
+    write('  • Sayuran hijau - Sumber vitamin, mineral, dan serat.'), nl,
+    write('  • Buah-buahan - Antioksidan dan vitamin C untuk imunitas.'), nl.
+
+tampilkan_rekomendasi_olahraga(KategoriUsia, StatusBerat) :-
+    write('Program olahraga yang sesuai:'), nl,
+
+    % Berdasarkan usia
+    write('→ Sesuai usia Anda:'), nl,
+    setof(Olahraga-Alasan, rekomendasi_olahraga_usia(KategoriUsia, Olahraga, Alasan), RekomendasiUsia),
+    forall(member(O-A, RekomendasiUsia), format('  • ~w - ~w~n', [O, A])),
+
+    % Berdasarkan kondisi khusus
+    (kondisi_khusus(_) ->
+        (nl, write('→ Sesuai kondisi kesehatan:'), nl,
+         setof(Olahraga-Alasan, Kondisi^(kondisi_khusus(Kondisi), rekomendasi_olahraga_kondisi(Kondisi, Olahraga, Alasan)), RekomendasiKondisi),
+         forall(member(O-A, RekomendasiKondisi), format('  • ~w - ~w~n', [O, A])))
+    ; true),
+
+    % Tips durasi dan frekuensi
+    nl,
+    write('→ Panduan umum:'), nl,
+    panduan_olahraga_umum(StatusBerat).
+
+panduan_olahraga_umum(underweight) :-
+    write('  • Fokus pada latihan kekuatan 3-4x/minggu.'), nl,
+    write('  • Kardio ringan 2-3x/minggu.'), nl,
+    write('  • Istirahat cukup untuk recovery.').
+panduan_olahraga_umum(normal) :-
+    write('  • Kombinasi kardio dan kekuatan 4-5x/minggu.'), nl,
+    write('  • Variasi jenis olahraga untuk mencegah bosan.'), nl,
+    write('  • Maintenance program yang konsisten.').
+panduan_olahraga_umum(overweight) :-
+    write('  • Kardio 4-5x/minggu, 30-45 menit.'), nl,
+    write('  • Latihan kekuatan 2-3x/minggu.'), nl,
+    write('  • Mulai bertahap, tingkatkan intensitas perlahan.').
+panduan_olahraga_umum(obesitas) :-
+    write('  • Mulai dengan jalan kaki 20-30 menit setiap hari.'), nl,
+    write('  • Tambahkan aktivitas air jika memungkinkan.'), nl,
+    write('  • Konsultasi dengan profesional untuk program yang aman.').
+
+tampilkan_tips_personal(StatusBerat, PolaMakan, Stres, Tidur) :-
+    % Tips berdasarkan pola makan
+    tips_pola_makan(PolaMakan), nl,
+
+    % Tips berdasarkan stres
+    tips_manajemen_stres(Stres), nl,
+
+    % Tips berdasarkan kualitas tidur
+    tips_kualitas_tidur(Tidur), nl,
+
+    % Tips khusus berdasarkan BMI
+    tips_berat_badan(StatusBerat), nl.
+
+tips_pola_makan(tidak_teratur) :-
+    write('📝 Pola Makan:'), nl,
+    write('  • Buat jadwal makan yang konsisten.'), nl,
+    write('  • Siapkan snack sehat untuk darurat.'), nl,
+    write('  • Gunakan pengingat untuk waktu makan.').
+tips_pola_makan(berlebihan) :-
+    write('📝 Pola Makan:'), nl,
+    write('  • Gunakan piring yang lebih kecil.'), nl,
+    write('  • Makan perlahan dan nikmati makanan.'), nl,
+    write('  • Minum air sebelum makan.').
+tips_pola_makan(kurang_nutrisi) :-
+    write('📝 Pola Makan:'), nl,
+    write('  • Konsultasi dengan ahli gizi.'), nl,
+    write('  • Pertimbangkan suplemen jika perlu.'), nl,
+    write('  • Fokus pada makanan padat nutrisi.').
+tips_pola_makan(_) :- % Mencakup teratur_seimbang dan tinggi_gula_lemak
+    write('📝 Pola Makan:'), nl,
+    write('  • Pertahankan kebiasaan makan yang baik dan teratur.'), nl,
+    write('  • Jika pola makan tinggi gula/lemak, kurangi secara bertahap.').
+
+tips_manajemen_stres(tinggi) :-
+    write('🧘 Manajemen Stres:'), nl,
+    write('  • Luangkan waktu untuk relaksasi setiap hari.'), nl,
+    write('  • Coba teknik pernapasan dalam atau meditasi.'), nl,
+    write('  • Pertimbangkan konseling jika diperlukan.').
+tips_manajemen_stres(sedang) :-
+    write('🧘 Manajemen Stres:'), nl,
+    write('  • Lakukan hobi yang menyenangkan.'), nl,
+    write('  • Jaga keseimbangan antara pekerjaan dan kehidupan pribadi.'). % # DIPERBAIKI: Aturan ditutup dengan titik.
+tips_manajemen_stres(rendah) :- % 
+    write('🧘 Manajemen Stres:'), nl,
+    write('  • Sangat baik! Pertahankan tingkat stres yang rendah.').
+
+tips_kualitas_tidur(kurang_sekali) :-
+    write('😴 Kualitas Tidur:'), nl,
+    write('  • Kualitas tidur Anda sangat kurang. Ini berisiko bagi kesehatan.'), nl,
+    write('  • Prioritaskan untuk tidur 7-9 jam setiap malam.'), nl,
+    write('  • Ciptakan rutinitas tidur yang menenangkan, hindari kafein dan gadget sebelum tidur.').
+tips_kualitas_tidur(kurang) :-
+    write('😴 Kualitas Tidur:'), nl,
+    write('  • Usahakan untuk menambah durasi tidur Anda.'), nl,
+    write('  • Pastikan lingkungan tidur Anda gelap, sejuk, dan tenang.').
+tips_kualitas_tidur(cukup) :-
+    write('😴 Kualitas Tidur:'), nl,
+    write('  • Kualitas tidur Anda sudah baik. Pertahankan!.').
+tips_kualitas_tidur(terlalu_banyak) :-
+    write('😴 Kualitas Tidur:'), nl,
+    write('  • Tidur berlebihan terkadang bisa menjadi indikator masalah kesehatan.'), nl,
+    write('  • Coba atur alarm untuk bangun pada jam yang konsisten.').
+tips_kualitas_tidur(_) :- !. % Jika 'tidak_tahu', tidak menampilkan apa-apa.
+
+tips_berat_badan(underweight) :-
+    write('⚖️ Tips Berat Badan (Underweight):'), nl,
+    write('  • Fokus pada surplus kalori sehat dari makanan padat nutrisi, bukan junk food.'), nl,
+    write('  • Tingkatkan frekuensi makan menjadi 5-6 kali porsi kecil sehari.').
+tips_berat_badan(normal) :-
+    write('⚖️ Tips Berat Badan (Normal):'), nl,
+    write('  • Selamat! Berat badan Anda sudah ideal.'), nl,
+    write('  • Pertahankan pola makan seimbang dan aktivitas fisik rutin.').
+tips_berat_badan(overweight) :-
+    write('⚖️ Tips Berat Badan (Overweight):'), nl,
+    write('  • Ciptakan defisit kalori yang wajar (kurangi ~500 kalori per hari).'), nl,
+    write('  • Perhatikan ukuran porsi dan perbanyak konsumsi serat (sayur & buah).').
+tips_berat_badan(obesitas) :-
+    write('⚖️ Tips Berat Badan (Obesitas):'), nl,
+    write('  • Sangat disarankan untuk berkonsultasi dengan dokter atau ahli gizi.'), nl,
+    write('  • Fokus pada perubahan gaya hidup jangka panjang yang berkelanjutan.').
